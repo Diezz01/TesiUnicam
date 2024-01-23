@@ -6,6 +6,22 @@ from Bio.PDB.PDBParser import PDBParser
 import pandas as pd
 import math
 from pathlib import Path
+import os
+
+# Altre importazioni rimangono invariate
+
+def process_files_in_directory(directory_path, dest_path, checkAtom):
+    pdb_files = glob(os.path.join(directory_path, '*.pdb'))
+
+    for pdb_file in pdb_files:
+        pdb_id = Path(pdb_file).stem  # Estrai il nome del file senza estensione
+        compute_distance_matrix(pdb_file, pdb_id, dest_path, checkAtom)
+
+if len(sys.argv) == 4:
+    process_files_in_directory(sys.argv[1], sys.argv[2], sys.argv[3])
+else:
+    print("Usage: python script.py <input_directory> <output_directory> <checkAtom>")
+
 pdb_parser = PDBParser(QUIET=True, PERMISSIVE=True)
 
 _hydrogen = re.compile("[123 ]*H.*")
@@ -31,12 +47,11 @@ def filterAtoms(arrayAtom, s):
 
 def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
     # print(pdb_id)
+    print("Analyzing {}", pdb_id)
     structure = pdb_parser.get_structure(pdb_id, pdb_file)
     # we filter out HETATM entries since they are not standard residue atoms
     residue_list = [res for res in structure.get_residues() if not is_hetero(res)]
-    print (residue_list)
     res_names = [residue_name(res) for res in residue_list]
-    print (res_names)
     distance_matrix = pd.DataFrame(0, index=res_names, columns=res_names)
 
     n_residues = len(residue_list)
@@ -68,11 +83,18 @@ def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
 
                 distance_matrix.loc[n1, n2] = min_distance
                 distance_matrix.loc[n2, n1] = min_distance
-    # print(distance_matrix)
-    distance_matrix.to_csv(f"{dest_path}/{pdb_id}_aa_distance_matrix.csv.gz", compression='gzip')
+
+    distance_matrix.to_csv(f"{dest_path}/{pdb_id}distance_matrix.csv")
 
 
-if len(sys.argv) >= 5:
-    compute_distance_matrix(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+def process_files(directory_path, dest_path, checkAtom):
+    pdb_files = glob(os.path.join(directory_path, '*.pdb'))
+
+    for pdb_file in pdb_files:
+        pdb_id = Path(pdb_file).stem  # Estrai il nome del file senza estensione
+        compute_distance_matrix(pdb_file, pdb_id, dest_path, checkAtom)
+
+if len(sys.argv) == 4:
+    process_files(sys.argv[1], sys.argv[2], sys.argv[3])
 else:
-    compute_distance_matrix(sys.argv[1], sys.argv[2], sys.argv[3], "")
+    process_files(sys.argv[1], sys.argv[2], "")
