@@ -27,24 +27,25 @@ labels = nx.get_edge_attributes(G, 'weight')
 
 num_nodi = G.number_of_nodes()
 num_archi = G.number_of_edges()
-grado_dei_nodi = dict(G.degree())
+#grado_dei_nodi = dict(G.degree())
 grado_medio = nx.average_degree_connectivity(G)
 diametro_del_grafo = nx.diameter(G)
-centralità_del_nodo = nx.degree_centrality(G)
+#centralità_del_nodo = nx.degree_centrality(G)
 coefficienti_di_clustering = nx.average_clustering(G)
 componenti_connesse =nx.number_connected_components(G)
 coeff_assortativita = nx.degree_assortativity_coefficient(G)
 
 
 # Intestazione delle colonne
-intestazione = ['Grafo_PDB', 'num_nodi', 'num_archi', 'grado_dei_nodi','grado_medio','diametro_del_grafo','centralità_del_nodo','coefficienti_di_clustering','componenti_connesse','coeff_assortativita']
+intestazione = ['Grafo_PDB', 'num_nodi', 'num_archi','grado_medio','diametro_del_grafo','coefficienti_di_clustering','componenti_connesse','coeff_assortativita']
+#intestazione = ['Grafo_PDB', 'num_nodi', 'num_archi', 'grado_dei_nodi','grado_medio','diametro_del_grafo','centralità_del_nodo','coefficienti_di_clustering','componenti_connesse','coeff_assortativita']
 # Creare un DataFrame con solo l'intestazione
 df = pd.DataFrame(columns=intestazione)
 
 
 # Lista di dizionari rappresentanti le righe
 dati = [
-    {'Grafo_PDB':"AA", 'num_nodi':num_nodi, 'num_archi':num_archi, 'grado_dei_nodi':grado_dei_nodi,'grado_medio':grado_medio,'diametro_del_grafo':diametro_del_grafo,'centralità_del_nodo':centralità_del_nodo,'coefficienti_di_clustering':coefficienti_di_clustering,'componenti_connesse':componenti_connesse,'coeff_assortativita':coeff_assortativita}
+    {'Grafo_PDB':"AA", 'num_nodi':num_nodi, 'num_archi':num_archi,'grado_medio':grado_medio,'diametro_del_grafo':diametro_del_grafo,'coefficienti_di_clustering':coefficienti_di_clustering,'componenti_connesse':componenti_connesse,'coeff_assortativita':coeff_assortativita}
 ]
 
 # Creare un DataFrame
