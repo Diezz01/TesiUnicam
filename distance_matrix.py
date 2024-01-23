@@ -84,7 +84,7 @@ def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
                 distance_matrix.loc[n1, n2] = min_distance
                 distance_matrix.loc[n2, n1] = min_distance
 
-    distance_matrix.to_csv(f"{dest_path}/{pdb_id}distance_matrix.csv")
+    distance_matrix.to_csv(f"{dest_path}/{pdb_id}.csv")
 
 
 def process_files(directory_path, dest_path, checkAtom):
