@@ -72,7 +72,7 @@ def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
             n2 = residue_name(res2)
             #heavy_atoms_2 = residue_atoms[j]
             heavy_atoms_2 = filterAtoms(residue_atoms[j],checkAtom)
-            print(heavy_atoms_1)
+            #print(heavy_atoms_1)
             min_distance = math.inf
             for atm1 in heavy_atoms_1:
                 for atm2 in heavy_atoms_2:
