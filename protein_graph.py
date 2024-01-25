@@ -7,10 +7,23 @@ from glob import glob
 import sys
 import csv
 
-def create_graph(matrix_file, pdb_id):
+
+def graph_weights(distance_matrix, representation_type, threshold):
+    if (representation_type == "sequence") :
+        weights_matrix = distance_matrix.applymap(lambda x: 0)
+    elif (representation_type == "contact_map") : 
+        weights_matrix = distance_matrix.applymap(lambda x: 1 if  x <= threshold else 0)
+    else:
+        weights_matrix = distance_matrix.applymap(lambda x: 1/(1+x) if  x <= threshold else 0)
+
+   # weights_matrix = weights_matrix.where(sequence_matrix == 0, 1)
+    return weights_matrix
+
+def create_graph(matrix_file):
     # Carica la matrice delle distanze da un file CSV
     df = pd.read_csv(matrix_file, index_col=0)
-
+    threshold = 6.0e-10
+    df = graph_weights(df,"",threshold)
     # Crea un grafo non diretto
     G = nx.Graph()
 
@@ -48,7 +61,7 @@ with open(check_path, mode='a', newline='') as file_csv:
     for matrix_file in matrix_files:
         pdb_id = Path(matrix_file).stem  # Estrai il nome del file senza estensione
         print("Analyzing: ",pdb_id)
-        graph = create_graph(matrix_file, pdb_id)
+        graph = create_graph(matrix_file)
         #scrivo nel csv
         riga_da_scrivere = [f'{pdb_id}', f'{graph.number_of_nodes()}', 
                             f'{graph.number_of_edges()}', f'{nx.average_degree_connectivity(graph)}',
