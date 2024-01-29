@@ -38,34 +38,36 @@ def create_graph(matrix_file):
     return G
 
 #main
-input_path = sys.argv[1]
-output_path = sys.argv[2]
+def main(input_path):
+    #input_path = sys.argv[1]
+    #output_path = sys.argv[2]
 
-file_graph = 'graph_info.csv'
-intestazione = ['PDB', 'num_nodi', 'num_archi','grado_medio','diametro_del_grafo','coefficienti_di_clustering','componenti_connesse']
+    file_graph = 'graph_info.csv'
+    intestazione = ['PDB', 'num_nodi', 'num_archi','grado_medio','diametro_del_grafo','coefficienti_di_clustering','componenti_connesse']
 
-# Verifica se il file esiste
-check_path = output_path+"\\"+file_graph
-print(check_path)
-if not os.path.isfile(check_path):
-    print("Creo il file")
-    # Se il file non esiste, crea il file e scrivi l'intestazione delle colonne
-    with open(check_path, mode='w', newline='') as file_csv:
-        csv_writer = csv.writer(file_csv)
-        csv_writer.writerow(intestazione)
+    # Verifica se il file esiste 
+    check_path = input_path+"\\"+"graph"
+    os.mkdir(check_path)
+    check_path = check_path+"\\"+file_graph
+    if not os.path.isfile(check_path):
+        print("Creo il file")
+        #Se il file non esiste, crea il file e scrivi l'intestazione delle colonne
+        with open(check_path, mode='w', newline='') as file_csv:
+            csv_writer = csv.writer(file_csv)
+            csv_writer.writerow(intestazione)
 
 # Apri il file CSV in modalità append
-with open(check_path, mode='a', newline='') as file_csv:
-    csv_writer = csv.writer(file_csv)
-    matrix_files = glob(os.path.join(input_path, '*.csv'))
-    for matrix_file in matrix_files:
-        pdb_id = Path(matrix_file).stem  # Estrai il nome del file senza estensione
-        print("Analyzing: ",pdb_id)
-        graph = create_graph(matrix_file)
-        #scrivo nel csv
-        riga_da_scrivere = [f'{pdb_id}', f'{graph.number_of_nodes()}', 
-                            f'{graph.number_of_edges()}', f'{nx.average_degree_connectivity(graph)}',
+    with open(check_path, mode='a', newline='') as file_csv:
+        csv_writer = csv.writer(file_csv)
+        matrix_files = glob(os.path.join(input_path, '*.csv'))
+        for matrix_file in matrix_files:
+            pdb_id = Path(matrix_file).stem  # Estrai il nome del file senza estensione
+            print("Analyzing: ",pdb_id)
+            graph = create_graph(matrix_file)
+            #scrivo nel csv
+            riga_da_scrivere = [f'{pdb_id}', f'{graph.number_of_nodes()}', 
+                            f'{graph.number_of_edges()}', f'{int(sum(nx.average_degree_connectivity(graph)))}',
                             f'{nx.diameter(graph)}',
                             f'{nx.average_clustering(graph)}',
                             f'{nx.number_connected_components(graph)}']
-        csv_writer.writerow(riga_da_scrivere)
+            csv_writer.writerow(riga_da_scrivere)

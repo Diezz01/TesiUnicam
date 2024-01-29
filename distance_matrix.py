@@ -7,6 +7,7 @@ import pandas as pd
 import math
 from pathlib import Path
 import os
+import protein_graph
 
 # Altre importazioni rimangono invariate
 
@@ -94,6 +95,8 @@ def process_files(directory_path, dest_path, checkAtom):
     for pdb_file in pdb_files:
         pdb_id = Path(pdb_file).stem  # Estrai il nome del file senza estensione
         compute_distance_matrix(pdb_file, pdb_id, dest_path, checkAtom)
+
+    protein_graph.main(dest_path)
 
 if len(sys.argv) == 4:
     process_files(sys.argv[1], sys.argv[2], sys.argv[3])
