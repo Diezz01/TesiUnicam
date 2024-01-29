@@ -44,7 +44,6 @@ def filterAtoms(arrayAtom, s):
         filtered_atoms = [atom for atom in arrayAtom if str(atom) == "<Atom {}>".format(s)]
         return filtered_atoms
 
-
 def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
     # print(pdb_id)
     print("Analyzing {}", pdb_id)
@@ -52,7 +51,7 @@ def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
     # we filter out HETATM entries since they are not standard residue atoms
     residue_list = [res for res in structure.get_residues() if not is_hetero(res)]
     res_names = [residue_name(res) for res in residue_list]
-    distance_matrix = pd.DataFrame(0, index=res_names, columns=res_names)
+    distance_matrix = pd.DataFrame(0, index=res_names, columns=res_names, dtype='float64')
 
     n_residues = len(residue_list)
     # precompute the list of heavy atoms (non-hydrogens) for each AA
@@ -81,8 +80,10 @@ def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
                     if distance < min_distance:
                         min_distance = distance
 
-                distance_matrix.loc[n1, n2] = min_distance
-                distance_matrix.loc[n2, n1] = min_distance
+                distance_matrix.loc[n1, n2] = min_distance.astype('float64')
+                distance_matrix.loc[n2, n1] = min_distance.astype('float64')
+                #distance_matrix.loc[n1, n2] = min_distance
+                #distance_matrix.loc[n2, n1] = min_distance
 
     distance_matrix.to_csv(f"{dest_path}/{pdb_id}.csv")
 
