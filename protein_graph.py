@@ -1,10 +1,8 @@
 import pandas as pd
 import networkx as nx
-import matplotlib.pyplot as plt
 from pathlib import Path
 import os
 from glob import glob
-import sys
 import csv
 
 
@@ -37,13 +35,24 @@ def create_graph(matrix_file):
                 G.add_edge(df.index[i], df.columns[j], weight=df.iloc[i, j])
     return G
 
-#main
-def main(input_path):
-    #input_path = sys.argv[1]
-    #output_path = sys.argv[2]
 
+def get_pdb_class(pdb_id, label_file):
+    with open(label_file, mode='r') as label:
+        reader = csv.reader(label, delimiter=';')
+        for riga in reader:
+            if(riga[0] == pdb_id):
+                return riga[2]
+
+def get_average_eccentricity(graph):
+    eccentricities = nx.eccentricity(graph)
+    # Calcolare l'eccentricità media
+    average_eccentricity = sum(eccentricities.values()) / len(eccentricities)
+    return average_eccentricity
+
+#main
+def main(input_path, label_file):
     file_graph = 'graph_info.csv'
-    intestazione = ['PDB', 'num_nodi', 'num_archi','grado_medio','diametro_del_grafo','coefficienti_di_clustering','componenti_connesse']
+    intestazione = ['PDB', 'num_nodi', 'num_archi','grado_medio','diametro_del_grafo','coefficienti_di_clustering','componenti_connesse','average_eccentricity','raggio_del_grafo','label']
 
     # Verifica se il file esiste 
     check_path = input_path+"\\"+"graph"
@@ -64,10 +73,13 @@ def main(input_path):
             pdb_id = Path(matrix_file).stem  # Estrai il nome del file senza estensione
             print("Analyzing: ",pdb_id)
             graph = create_graph(matrix_file)
+            pdb_classification = get_pdb_class(pdb_id, label_file)
             #scrivo nel csv
             riga_da_scrivere = [f'{pdb_id}', f'{graph.number_of_nodes()}', 
                             f'{graph.number_of_edges()}', f'{int(sum(nx.average_degree_connectivity(graph)))}',
                             f'{nx.diameter(graph)}',
                             f'{nx.average_clustering(graph)}',
-                            f'{nx.number_connected_components(graph)}']
+                            f'{nx.number_connected_components(graph)}',f'{get_average_eccentricity(graph)}',
+                            f'{nx.radius(graph)}',
+                            f'{pdb_classification}']
             csv_writer.writerow(riga_da_scrivere)

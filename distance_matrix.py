@@ -8,9 +8,7 @@ import math
 from pathlib import Path
 import os
 import protein_graph
-
-# Altre importazioni rimangono invariate
-
+'''
 def process_files_in_directory(directory_path, dest_path, checkAtom):
     pdb_files = glob(os.path.join(directory_path, '*.pdb'))
 
@@ -18,10 +16,12 @@ def process_files_in_directory(directory_path, dest_path, checkAtom):
         pdb_id = Path(pdb_file).stem  # Estrai il nome del file senza estensione
         compute_distance_matrix(pdb_file, pdb_id, dest_path, checkAtom)
 
-if len(sys.argv) == 4:
+if len(sys.argv) >= 3:
     process_files_in_directory(sys.argv[1], sys.argv[2], sys.argv[3])
 else:
     print("Usage: python script.py <input_directory> <output_directory> <checkAtom>")
+'''
+
 
 pdb_parser = PDBParser(QUIET=True, PERMISSIVE=True)
 
@@ -30,10 +30,8 @@ _hydrogen = re.compile("[123 ]*H.*")
 def is_hydrogen(atm):
     return _hydrogen.match(atm.get_id())
 
-
 def is_hetero(res):
     return res.get_full_id()[3][0] != ' '
-
 
 def residue_name(res):
     return "%s_%d_%s" % (res.get_full_id()[2], res.get_full_id()[3][1], res.get_full_id()[3][2])
@@ -88,17 +86,22 @@ def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
 
     distance_matrix.to_csv(f"{dest_path}/{pdb_id}.csv")
 
-
-def process_files(directory_path, dest_path, checkAtom):
-    pdb_files = glob(os.path.join(directory_path, '*.pdb'))
+#questa funzione computa tutte le matrici delle distanze e richiama la funzione per creare i grafi
+def process_files(input_path, dest_path, label_file, checkAtom):
+    pdb_files = glob(os.path.join(input_path, '*.pdb'))
 
     for pdb_file in pdb_files:
         pdb_id = Path(pdb_file).stem  # Estrai il nome del file senza estensione
         compute_distance_matrix(pdb_file, pdb_id, dest_path, checkAtom)
 
-    protein_graph.main(dest_path)
+    protein_graph.main(dest_path,label_file)
 
-if len(sys.argv) == 4:
-    process_files(sys.argv[1], sys.argv[2], sys.argv[3])
+
+if len(sys.argv) < 3: 
+    print("USAGE: <input_dir> <output_dir> <label_file> [<atom>]")
+    exit()
 else:
-    process_files(sys.argv[1], sys.argv[2], "")
+    if len(sys.argv) == 5:
+        process_files(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    else:
+        process_files(sys.argv[1], sys.argv[2], sys.argv[3], "")
