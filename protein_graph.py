@@ -52,7 +52,7 @@ def get_average_eccentricity(graph):
 #main
 def main(input_path, label_file):
     file_graph = 'graph_info.csv'
-    intestazione = ['PDB', 'num_nodi', 'num_archi','grado_medio','diametro_del_grafo','coefficienti_di_clustering','componenti_connesse','average_eccentricity','raggio_del_grafo','label']
+    intestazione = ['pdb', 'num_nodi', 'num_archi','grado_medio','diametro_del_grafo','coefficienti_di_clustering','componenti_connesse','average_eccentricity','raggio_del_grafo','classification']
 
     # Verifica se il file esiste 
     check_path = input_path+"\\"+"graph"

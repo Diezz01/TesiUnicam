@@ -34,17 +34,18 @@ output_path = sys.argv[2]
 aas_files = glob(os.path.join(input_path, '*.txt')) #prendo tutti i file con estensione aas dalla directory fornita
 
 max_seq_length = getMaxSeqLength(aas_files)
-intestazione = range(0, max_seq_length+1)
+header = ['pdb','classification']
+header.extend(range(1, max_seq_length))
 
 file_features_seq = "feature_sequence.csv"
 check_path = output_path+file_features_seq
 print(check_path)
 if not os.path.isfile(check_path):
     print("Creo il file")
-    #Se il file non esiste, crea il file e scrivi l'intestazione delle colonne
+    #Se il file non esiste, crea il file e scrivi l'header delle colonne
     with open(check_path, mode='w', newline='') as file_csv:
         csv_writer = csv.writer(file_csv)
-        csv_writer.writerow(intestazione)
+        csv_writer.writerow(header)
 
 for aas_file in aas_files:
     with open(aas_file, mode='r', newline='') as aas:
@@ -70,6 +71,6 @@ for aas_file in aas_files:
             sum = 0
             for singleFeature in row_np_arr:
                 #scrivo nel csv ciascuna feature della sequenza
-                sum = sum + singleFeature
+                sum = sum + singleFeature.astype('float64')
             riga_da_scrivere.append(sum/1024)
         csv_writer.writerow(riga_da_scrivere)
