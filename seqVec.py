@@ -18,13 +18,13 @@ embedder = SeqVecEmbedder()
 embedding = embedder.embed(seq)
 protein_embd = torch.tensor(embedding).sum(dim=0) # Vector with shape [L x 1024]
 np_arr = protein_embd.cpu().detach().numpy()
-#np.set_printoptions(threshold=np.inf)  # Imposta il limite della visualizzazione delle righe a infinito
+np.set_printoptions(threshold=np.inf)  # Imposta il limite della visualizzazione delle righe a infinito
 np.set_printoptions(precision=4, suppress=True)
 
 print("lunghezza np arr: ",len(np_arr))
 
 print(np_arr)
-intestazione = range(1, 1025)
+intestazione = range(1, len(seq))
 
 #input_path = "/Users/filipporeucci/Desktop/"
 output_path = sys.argv[1]
@@ -41,10 +41,11 @@ if not os.path.isfile(check_path):
 # Apri il file CSV in modalità append
 with open(check_path, mode='a', newline='') as file_csv:
     csv_writer = csv.writer(file_csv)
-
+    riga_da_scrivere = []
     for row_np_arr in np_arr:
-        riga_da_scrivere = []
+        sum = 0
         for singleFeature in row_np_arr:
             #scrivo nel csv ciascuna feature della sequenza
-            riga_da_scrivere.append(singleFeature)
-        csv_writer.writerow(riga_da_scrivere)
+            sum = sum + singleFeature
+        riga_da_scrivere.append(sum/1024)
+    csv_writer.writerow(riga_da_scrivere)
