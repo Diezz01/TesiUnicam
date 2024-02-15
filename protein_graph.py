@@ -4,7 +4,31 @@ from pathlib import Path
 import os
 from glob import glob
 import csv
-
+#legenda che rappresenta il tipo di nodo nel dataset
+def switch_iupac(code):
+    switcher = {
+        'A': 1,
+        'C': 2,
+        'D': 3,
+        'E': 4,
+        'F': 5,
+        'G': 6,
+        'H': 7,
+        'I': 8,
+        'K': 9,
+        'L': 10,
+        'M': 11,
+        'N': 12,
+        'Q': 13,
+        'R': 14,
+        'S': 15,
+        'T': 16,
+        'U': 17,
+        'V': 18,
+        'W': 19,
+        'Y': 20
+    }
+    return switcher.get(code.upper(), -1)  # Ritorna -1 se il codice non è presente nel dizionario
 
 def graph_weights(distance_matrix, representation_type, threshold):
     if (representation_type == "sequence") :
@@ -64,13 +88,17 @@ def main(input_path, label_file):
         with open(check_path, mode='w', newline='') as file_csv:
             csv_writer = csv.writer(file_csv)
             csv_writer.writerow(intestazione)
-
+    dataset_path = input_path+"\\"+"DataSet"
+    os.mkdir(dataset_path)
+   
 # Apri il file CSV in modalità append
     with open(check_path, mode='a', newline='') as file_csv:
         csv_writer = csv.writer(file_csv)
         matrix_files = glob(os.path.join(input_path, '*.csv'))
+        graphs_classifications = []
+        nodes_labels = []
         for matrix_file in matrix_files:
-            pdb_id = Path(matrix_file).stem  # Estrai il nome del file senza estensione
+            pdb_id = Path(matrix_file).stem  #Estrai il nome del file senza estensione
             print("Analyzing: ",pdb_id)
             graph = create_graph(matrix_file)
             pdb_classification = get_pdb_class(pdb_id, label_file)
@@ -83,3 +111,17 @@ def main(input_path, label_file):
                             f'{nx.radius(graph)}',
                             f'{pdb_classification}']
             csv_writer.writerow(riga_da_scrivere)
+            #rnella sezione che segue venegono raccolti tutti i dati per la creazione del dataset per le gnn
+            graphs_classifications.append(pdb_classification)#raccolgo tutti i nodi di tutti i grafi
+            for node in graph.nodes():
+                nodes_labels.append(switch_iupac(node['label'][0]))
+
+
+    #registro le classificazioni dei grafi
+    with open(dataset_path+"\\"+"DATASET_graph_labels.txt", "w") as file:
+        for number in graphs_classifications:
+            file.write(str(number) + "\n")
+
+    with open(dataset_path+"\\"+"DATASET_node_labels.txt", "w") as file:
+        for number in nodes_labels:
+            file.write(str(number) + "\n")
