@@ -4,6 +4,10 @@ from pathlib import Path
 import os
 from glob import glob
 import csv
+import numpy as np
+from scipy.sparse import csr_matrix, block_diag
+from scipy.sparse import find
+
 #legenda che rappresenta il tipo di nodo nel dataset
 def switch_iupac(code):
     switcher = {
@@ -30,22 +34,25 @@ def switch_iupac(code):
     }
     return switcher.get(code.upper(), -1)  # Ritorna -1 se il codice non è presente nel dizionario
 
-def graph_weights(distance_matrix, representation_type, threshold):
-    if (representation_type == "sequence") :
-        weights_matrix = distance_matrix.applymap(lambda x: 0)
-    elif (representation_type == "contact_map") : 
-        weights_matrix = distance_matrix.applymap(lambda x: 1 if  x <= threshold else 0)
-    else:
-        weights_matrix = distance_matrix.applymap(lambda x: 1/(1+x) if  x <= threshold else 0)
+def get_sparse_matrix(adjacent_matrixs, card_matrix):
+    sparse_matrix = csr_matrix((card_matrix, card_matrix), dtype=np.float64)  # Creazione di una matrice sparsa vuota
+    start = 0
+    for ad_m in adjacent_matrixs:
+        ad_m_rows, ad_m_cols = ad_m.shape  # Otteniamo le dimensioni della matrice sparsa
+        sparse_matrix[start:start+ad_m_rows, start:start+ad_m_cols] = ad_m  # Assegnamento della matrice sparsa alla posizione corretta nella matrice composta
+        start += ad_m_rows
+    return sparse_matrix
+       
 
-   # weights_matrix = weights_matrix.where(sequence_matrix == 0, 1)
-    return weights_matrix
+def graph_weights(distance_matrix, threshold):
+    return distance_matrix.applymap(lambda x: 1 if  x >= threshold else 0)
 
 def create_graph(matrix_file):
     # Carica la matrice delle distanze da un file CSV
     df = pd.read_csv(matrix_file, index_col=0)
     threshold = 6.0e-10
-    df = graph_weights(df,"",threshold)
+    df = graph_weights(df,threshold)
+    #print (df)
     # Crea un grafo non diretto
     G = nx.Graph()
 
@@ -62,7 +69,7 @@ def create_graph(matrix_file):
 
 def get_pdb_class(pdb_id, label_file):
     with open(label_file, mode='r') as label:
-        reader = csv.reader(label, delimiter=';')
+        reader = csv.reader(label, delimiter=',')
         for riga in reader:
             if(riga[0] == pdb_id):
                 return riga[2]
@@ -97,6 +104,9 @@ def main(input_path, label_file):
         matrix_files = glob(os.path.join(input_path, '*.csv'))
         graphs_classifications = []
         nodes_labels = []
+        nodes_for_graphs = []
+        adjacent_matrixs = []
+        count = 1
         for matrix_file in matrix_files:
             pdb_id = Path(matrix_file).stem  #Estrai il nome del file senza estensione
             print("Analyzing: ",pdb_id)
@@ -114,7 +124,11 @@ def main(input_path, label_file):
             #rnella sezione che segue venegono raccolti tutti i dati per la creazione del dataset per le gnn
             graphs_classifications.append(pdb_classification)#raccolgo tutti i nodi di tutti i grafi
             for node in graph.nodes():
-                nodes_labels.append(switch_iupac(node['label'][0]))
+                nodes_labels.append(switch_iupac(node[0]))
+                nodes_for_graphs.append(count)
+
+            adjacent_matrixs.append(nx.adjacency_matrix(graph))
+            count += 1
 
 
     #registro le classificazioni dei grafi
@@ -122,6 +136,21 @@ def main(input_path, label_file):
         for number in graphs_classifications:
             file.write(str(number) + "\n")
 
+    #registro le eticchette dei nodi
     with open(dataset_path+"\\"+"DATASET_node_labels.txt", "w") as file:
         for number in nodes_labels:
             file.write(str(number) + "\n")
+
+    with open(dataset_path+"\\"+"DATASET_graph_indicator.txt", "w") as file:
+        for number in nodes_for_graphs:
+            file.write(str(number) + "\n")
+   
+    sparse_matrix=get_sparse_matrix(adjacent_matrixs,len(nodes_for_graphs))
+    posizioni_valori_non_zero = sparse_matrix.nonzero()
+
+    # Convertiamo le posizioni in una lista di coppie di indici
+    index_pairs = list(zip(*posizioni_valori_non_zero))
+
+    with open(dataset_path+"\\"+"DATASET_A.txt", "w") as file:
+            for pair in index_pairs:
+                file.write(f"{pair[0]}, {pair[1]}\n")

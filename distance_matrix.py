@@ -70,7 +70,6 @@ def compute_distance_matrix(pdb_file, pdb_id, dest_path,checkAtom):
                 distance_matrix.loc[n2, n1] = min_distance.astype('float64')
                 #distance_matrix.loc[n1, n2] = min_distance
                 #distance_matrix.loc[n2, n1] = min_distance
-    print(distance_matrix)
     distance_matrix.to_csv(f"{dest_path}/{pdb_id}.csv")
 
 #questa funzione computa tutte le matrici delle distanze e richiama la funzione per creare i grafi
