@@ -7,6 +7,8 @@ import csv
 import numpy as np
 from scipy.sparse import csr_matrix, block_diag
 from scipy.sparse import find
+import one_hot_encode
+from collections import Counter
 
 #legenda che rappresenta il tipo di nodo nel dataset
 def switch_iupac(code):
@@ -107,6 +109,9 @@ def main(input_path, label_file):
         nodes_for_graphs = []
         adjacent_matrixs = []
         count = 1
+
+        graphs_list = []
+
         for matrix_file in matrix_files:
             pdb_id = Path(matrix_file).stem  #Estrai il nome del file senza estensione
             print("Analyzing: ",pdb_id)
@@ -121,6 +126,7 @@ def main(input_path, label_file):
                             f'{nx.radius(graph)}',
                             f'{pdb_classification}']
             csv_writer.writerow(riga_da_scrivere)
+            graphs_list.append(graph)
             #rnella sezione che segue venegono raccolti tutti i dati per la creazione del dataset per le gnn
             graphs_classifications.append(pdb_classification)#raccolgo tutti i nodi di tutti i grafi
             for node in graph.nodes():
@@ -129,6 +135,8 @@ def main(input_path, label_file):
 
             adjacent_matrixs.append(nx.adjacency_matrix(graph))
             count += 1
+        one_hot_encode.dataset_create(graphs_list,len(Counter(graphs_classifications)))
+
 
 
     #registro le classificazioni dei grafi
@@ -153,4 +161,4 @@ def main(input_path, label_file):
 
     with open(dataset_path+"\\"+"DATASET_A.txt", "w") as file:
             for pair in index_pairs:
-                file.write(f"{pair[0]}, {pair[1]}\n")
+                file.write(f"{pair[0]+1}, {pair[1]+1}\n")
