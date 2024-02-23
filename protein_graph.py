@@ -100,16 +100,16 @@ def main(input_path, label_file):
     intestazione = ['pdb', 'num_nodi', 'num_archi','grado_medio','diametro_del_grafo','coefficienti_di_clustering','componenti_connesse','average_eccentricity','raggio_del_grafo','classification']
 
     # Verifica se il file esiste 
-    check_path = input_path+"\\"+"graph"
+    check_path = os.path.join(input_path,"graph")
     os.mkdir(check_path)
-    check_path = check_path+"\\"+file_graph
+    check_path = os.path.join(check_path,file_graph)
     if not os.path.isfile(check_path):
         print("Creo il file")
         #Se il file non esiste, crea il file e scrivi l'intestazione delle colonne
         with open(check_path, mode='w', newline='') as file_csv:
             csv_writer = csv.writer(file_csv)
             csv_writer.writerow(intestazione)
-    dataset_path = input_path+"\\"+"DataSet"
+    dataset_path = os.path.join(input_path,"DataSet")
     os.mkdir(dataset_path)
    
 # Apri il file CSV in modalità append
@@ -154,6 +154,7 @@ def main(input_path, label_file):
 
 
     #registro le classificazioni dei grafi
+    '''
     with open(dataset_path+"\\"+"DATASET_graph_labels.txt", "w") as file:
         for number in graphs_classifications:
             file.write(str(number) + "\n")
@@ -176,3 +177,4 @@ def main(input_path, label_file):
     with open(dataset_path+"\\"+"DATASET_A.txt", "w") as file:
             for pair in index_pairs:
                 file.write(f"{pair[0]+1}, {pair[1]+1}\n")
+    '''
