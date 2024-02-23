@@ -45,21 +45,33 @@ def get_sparse_matrix(adjacent_matrixs, card_matrix):
         start += ad_m_rows
     return sparse_matrix
        
+def apply_threshold(x, i, j,threshold):
+    if i == j:
+        # Se l'elemento è sulla diagonale, restituisci il valore originale
+        return x
+    else:
+        # Altrimenti, applica il threshold
+        return 1 if x <= threshold else 0
 
 def graph_weights(distance_matrix, threshold):
-    return distance_matrix.applymap(lambda x: 1 if  x >= threshold else 0)
-
+    thresholded_matrix = pd.DataFrame(index=distance_matrix.index, columns=distance_matrix.columns)
+    for i, row in enumerate(distance_matrix.index):
+        for j, col in enumerate(distance_matrix.columns):
+            thresholded_matrix.loc[row, col] = apply_threshold(distance_matrix.loc[row, col], i, j,threshold)
+    return thresholded_matrix
+    
 def create_graph(matrix_file):
     # Carica la matrice delle distanze da un file CSV
     df = pd.read_csv(matrix_file, index_col=0)
-    threshold = 6.0e-10
+    threshold = 4.0e-10
     df = graph_weights(df,threshold)
-    #print (df)
+    print (df)
     # Crea un grafo non diretto
     G = nx.Graph()
 
     # Aggiungi nodi al grafo
     G.add_nodes_from(df.index)
+    
 
     # Itera sulla matrice e aggiungi archi al grafo solo se sono sotto la diagonale principale
     for i in range(len(df.index)):
@@ -116,7 +128,9 @@ def main(input_path, label_file):
             pdb_id = Path(matrix_file).stem  #Estrai il nome del file senza estensione
             print("Analyzing: ",pdb_id)
             graph = create_graph(matrix_file)
+           
             pdb_classification = get_pdb_class(pdb_id, label_file)
+            graph.graph['label'] = pdb_classification
             #scrivo nel csv
             riga_da_scrivere = [f'{pdb_id}', f'{graph.number_of_nodes()}', 
                             f'{graph.number_of_edges()}', f'{int(sum(nx.average_degree_connectivity(graph)))}',

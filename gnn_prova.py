@@ -7,17 +7,12 @@ from torch.nn import Linear
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn import global_mean_pool
-#from IPython.display import Javascript
-#display(Javascript('''google.colab.output.setIframeHeight(0, true, {maxHeight: 300})'''))
 
-def gnn(dataset,num_classes):
-    
+def gnn(dataset, num_classes):
     print()
     print(f'Dataset: {dataset}:')
     print('====================')
     print(f'Number of graphs: {len(dataset)}')
-    #print(f'Number of features: {dataset.num_features}')
-    #print(f'Number of classes: {dataset.num_classes}')
 
     data = dataset[0]  # Get the first graph object.
 
@@ -32,62 +27,53 @@ def gnn(dataset,num_classes):
     print(f'Has isolated nodes: {data.has_isolated_nodes()}')
     print(f'Has self-loops: {data.has_self_loops()}')
     print(f'Is undirected: {data.is_undirected()}')
-    
+
     torch.manual_seed(12345)
     random.shuffle(dataset)
-    #dataset = dataset.shuffle()
-
-    train_dataset = dataset[:6]
-    test_dataset = dataset[6:]
+    train_dataset = dataset[:4]
+    test_dataset = dataset[4:]
 
     print(f'Number of training graphs: {len(train_dataset)}')
     print(f'Number of test graphs: {len(test_dataset)}')
 
-    train_loader = DataLoader(train_dataset, batch_size=3, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=3, shuffle=False)
-
-    for step, data in enumerate(train_loader):
-        print(f'Step {step + 1}:')
-        print('=======')
-        print(f'Number of graphs in the current batch: {data.num_graphs}')
-        print(data)
-        print()
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
     class GCN(torch.nn.Module):
-        def __init__(self, hidden_channels):
+        def __init__(self, num_features, hidden_channels, num_classes):
             super(GCN, self).__init__()
-            torch.manual_seed(12345)
-            c = 0
-            for data in dataset:
-                c += data.num_node_features
-            self.conv1 = GCNConv(c, hidden_channels)
-            #self.conv1 = GCNConv(dataset.num_node_features, hidden_channels)
+            self.conv1 = GCNConv(num_features, hidden_channels)
             self.conv2 = GCNConv(hidden_channels, hidden_channels)
             self.conv3 = GCNConv(hidden_channels, hidden_channels)
-            
             self.lin = Linear(hidden_channels, num_classes)
 
         def forward(self, x, edge_index, batch):
-            # 1. Obtain node embeddings 
+            print("Shape of x before conv1:", x.shape)
             x = self.conv1(x, edge_index)
+            print("Shape of x after conv1:", x.shape)
             x = x.relu()
+            
+            print("Shape of x before conv2:", x.shape)
             x = self.conv2(x, edge_index)
+            print("Shape of x after conv2:", x.shape)
             x = x.relu()
+            
+            print("Shape of x before conv3:", x.shape)
             x = self.conv3(x, edge_index)
-
-            # 2. Readout layer
-            x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
-
-            # 3. Apply a final classifier
+            print("Shape of x after conv3:", x.shape)
+            x = global_mean_pool(x, batch)
             x = F.dropout(x, p=0.5, training=self.training)
             x = self.lin(x)
-            
             return x
 
-    model = GCN(hidden_channels=64)
+
+    # Calcola il numero di features per il primo grafo nel dataset
+    first_data = dataset[0]
+    num_features = first_data.num_node_features
+
+    model = GCN(num_features=num_features, hidden_channels=5, num_classes=num_classes)
     print(model)
 
-    #model = GCN(hidden_channels=64)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -95,9 +81,10 @@ def gnn(dataset,num_classes):
         model.train()
 
         for data in train_loader:  # Iterate in batches over the training dataset.
-            print("data x: ",data.x)
-            print("data edge_index: ",data.edge_index)
-            print("data batch: ",data.batch)
+            print("Node features:")
+            print(data.x[:10])  # Stampa le features dei primi 10 nodi
+            print("Node labels:")
+            print(data.y[:10])  # Stampa le etichette one-hot dei primi 10 nodi
             out = model(data.x, data.edge_index, data.batch)  # Perform a single forward pass.
             loss = criterion(out, data.y)  # Compute the loss.
             loss.backward()  # Derive gradients.
@@ -109,10 +96,15 @@ def gnn(dataset,num_classes):
 
         correct = 0
         for data in loader:  # Iterate in batches over the training/test dataset.
+            print("Node features:")
+            print(data.x[:10])  # Stampa le features dei primi 10 nodi
+            print("Node labels:")
+            print(data.y[:10])  # Stampa le etichette one-hot dei primi 10 nodi
             out = model(data.x, data.edge_index, data.batch)  
             pred = out.argmax(dim=1)  # Use the class with highest probability.
             correct += int((pred == data.y).sum())  # Check against ground-truth labels.
         return correct / len(loader.dataset)  # Derive ratio of correct predictions.
+
 
 
     for epoch in range(1, 171):
@@ -120,3 +112,7 @@ def gnn(dataset,num_classes):
         train_acc = test(train_loader)
         test_acc = test(test_loader)
         print(f'Epoch: {epoch:03d}, Train Acc: {train_acc:.4f}, Test Acc: {test_acc:.4f}')
+
+# Esempio di utilizzo:
+# Supponendo che dataset e num_classes siano già stati definiti in precedenza
+# gnn(dataset, num_classes)
