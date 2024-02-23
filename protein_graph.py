@@ -63,7 +63,7 @@ def graph_weights(distance_matrix, threshold):
 def create_graph(matrix_file):
     # Carica la matrice delle distanze da un file CSV
     df = pd.read_csv(matrix_file, index_col=0)
-    threshold = 4.0e-10
+    threshold = 6.0e-5
     df = graph_weights(df,threshold)
     print (df)
     # Crea un grafo non diretto
@@ -149,7 +149,8 @@ def main(input_path, label_file):
 
             adjacent_matrixs.append(nx.adjacency_matrix(graph))
             count += 1
-        one_hot_encode.dataset_create(graphs_list,len(Counter(graphs_classifications)))
+        #one_hot_encode.dataset_create(graphs_list,len(Counter(graphs_classifications)))
+        one_hot_encode.dataset_create(graphs_list,list(set(graphs_classifications)))
 
 
 

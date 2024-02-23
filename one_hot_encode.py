@@ -1,4 +1,5 @@
 # example of a one hot encoding
+from collections import Counter
 from numpy import asarray
 from sklearn.preprocessing import OneHotEncoder
 import torch
@@ -10,9 +11,9 @@ import nostra_gcn
 
 def encode_aminoacids(node_char):
     # define data
-    data = asarray([['A'], ['C'], ['D'], ['E'], ['F'], ['G'], ['H'], ['I'], ['K'], ['L'], ['M'], ['N'], ['Q'], ['R'], ['S'],['T'],['U'],['V'],['W'],['Y']])
+    data = asarray([['A'], ['C'], ['D'], ['E'], ['F'], ['G'], ['H'], ['I'], ['K'], ['L'], ['M'], ['N'], ['P'], ['Q'], ['R'], ['S'],['T'],['U'],['V'],['W'],['Y']])
     # define one hot encoding
-    encoder = OneHotEncoder(sparse=False)
+    encoder = OneHotEncoder()
     # transform data
     encoder.fit_transform(data)
    
@@ -22,12 +23,10 @@ def encode_aminoacids(node_char):
     # Esegue l'encoding del carattere specifico
     encoding_carattere_specifico = encoder.transform(carattere_specifico_encoded)
     return encoding_carattere_specifico
-    #print(encoding_carattere_specifico)
 
-def dataset_create(graphs_list: List[nx.Graph],num_classes):
-
+def dataset_create(graphs_list: List[nx.Graph],graphs_classifications):
     dataset = []
-    #crazione lista archi andata e ritorno indicizzati (da 0 a num_nodes-1) invece di etichette
+    #creazione lista archi andata e ritorno indicizzati (da 0 a num_nodes-1) invece di etichette
     for single_graph in graphs_list:
         ar_edge_list = []
         node_list = list(single_graph.nodes())
@@ -54,13 +53,16 @@ def dataset_create(graphs_list: List[nx.Graph],num_classes):
             node_encode = (encode_aminoacids(nx.get_node_attributes(single_graph, 'label')[i]))
             encoded_aminoacids.append(node_encode)
         '''
+        encoded_aminoacids_array = [encoded_aminoacids[i].toarray()[0] for i in range(len(encoded_aminoacids))]
         #creo il tensore con gli ammioacidi codificati
-        x = torch.tensor(encoded_aminoacids, dtype=torch.float)
-        data = Data(x=x, edge_index=edge_index, y=single_graph.graph['label'])
+        x = torch.tensor(encoded_aminoacids_array, dtype=torch.float)
+        #y = torch.tensor(single_graph.graph['label'])
+        index_classification = graphs_classifications.index(single_graph.graph['label'])
+        y = torch.tensor(index_classification)
+        #y = torch.tensor([1], dtype=torch.long)
+        #data = Data(x=x, edge_index=edge_index, y=single_graph.graph['label'])
+        data = Data(x=x, edge_index=edge_index, y=y)
         data.validate(raise_on_error=True)
         dataset.append(data)
-    
-    gnn_prova.gnn(dataset,num_classes)
-    #nostra_gcn.train_gcn(dataset,num_classes)
 
-    
+    gnn_prova.gnn(dataset,len(graphs_classifications))

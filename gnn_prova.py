@@ -36,8 +36,8 @@ def gnn(dataset, num_classes):
     print(f'Number of training graphs: {len(train_dataset)}')
     print(f'Number of test graphs: {len(test_dataset)}')
 
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False)
 
     class GCN(torch.nn.Module):
         def __init__(self, num_features, hidden_channels, num_classes):
@@ -48,19 +48,11 @@ def gnn(dataset, num_classes):
             self.lin = Linear(hidden_channels, num_classes)
 
         def forward(self, x, edge_index, batch):
-            print("Shape of x before conv1:", x.shape)
             x = self.conv1(x, edge_index)
-            print("Shape of x after conv1:", x.shape)
             x = x.relu()
-            
-            print("Shape of x before conv2:", x.shape)
             x = self.conv2(x, edge_index)
-            print("Shape of x after conv2:", x.shape)
             x = x.relu()
-            
-            print("Shape of x before conv3:", x.shape)
             x = self.conv3(x, edge_index)
-            print("Shape of x after conv3:", x.shape)
             x = global_mean_pool(x, batch)
             x = F.dropout(x, p=0.5, training=self.training)
             x = self.lin(x)
@@ -71,8 +63,8 @@ def gnn(dataset, num_classes):
     first_data = dataset[0]
     num_features = first_data.num_node_features
 
-    model = GCN(num_features=num_features, hidden_channels=5, num_classes=num_classes)
-    print(model)
+    model = GCN(num_features=num_features, hidden_channels=4, num_classes=num_classes)
+    #print(model)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()
@@ -81,25 +73,22 @@ def gnn(dataset, num_classes):
         model.train()
 
         for data in train_loader:  # Iterate in batches over the training dataset.
-            print("Node features:")
-            print(data.x[:10])  # Stampa le features dei primi 10 nodi
-            print("Node labels:")
-            print(data.y[:10])  # Stampa le etichette one-hot dei primi 10 nodi
             out = model(data.x, data.edge_index, data.batch)  # Perform a single forward pass.
+
+            # Calcola la perdita utilizzando il tensore target
+            #loss = F.cross_entropy(out, target_tensor)            
             loss = criterion(out, data.y)  # Compute the loss.
+            #loss = F.binary_cross_entropy(out, data.y)  # Compute the loss.
+            #loss = F.binary_cross_entropy_with_logits(out.view(-1), data.y.float())
             loss.backward()  # Derive gradients.
             optimizer.step()  # Update parameters based on gradients.
-            optimizer.zero_grad()  # Clear gradients.
+            optimizer.zero_grad()  # Clear gradients.            
 
     def test(loader):
         model.eval()
 
         correct = 0
         for data in loader:  # Iterate in batches over the training/test dataset.
-            print("Node features:")
-            print(data.x[:10])  # Stampa le features dei primi 10 nodi
-            print("Node labels:")
-            print(data.y[:10])  # Stampa le etichette one-hot dei primi 10 nodi
             out = model(data.x, data.edge_index, data.batch)  
             pred = out.argmax(dim=1)  # Use the class with highest probability.
             correct += int((pred == data.y).sum())  # Check against ground-truth labels.
