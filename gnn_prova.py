@@ -14,22 +14,10 @@ def gnn(dataset, num_classes):
     print('====================')
     print(f'Number of graphs: {len(dataset)}')
 
-    data = dataset[0]  # Get the first graph object.
-
-    print()
-    print(data)
-    print('=============================================================')
-
-    # Gather some statistics about the first graph.
-    print(f'Number of nodes: {data.num_nodes}')
-    print(f'Number of edges: {data.num_edges}')
-    print(f'Average node degree: {data.num_edges / data.num_nodes:.2f}')
-    print(f'Has isolated nodes: {data.has_isolated_nodes()}')
-    print(f'Has self-loops: {data.has_self_loops()}')
-    print(f'Is undirected: {data.is_undirected()}')
 
     torch.manual_seed(12345)
     random.shuffle(dataset)
+    #creazione dei dataset di allenamento e test
     train_dataset = dataset[:4]
     test_dataset = dataset[4:]
 
@@ -61,10 +49,11 @@ def gnn(dataset, num_classes):
 
     # Calcola il numero di features per il primo grafo nel dataset
     first_data = dataset[0]
+    for a in dataset:
+        print(a.num_node_features)
     num_features = first_data.num_node_features
 
     model = GCN(num_features=num_features, hidden_channels=4, num_classes=num_classes)
-    #print(model)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = torch.nn.CrossEntropyLoss()

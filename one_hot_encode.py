@@ -45,22 +45,15 @@ def dataset_create(graphs_list: List[nx.Graph],graphs_classifications):
         encoded_aminoacids = []
         
         for single_node in node_list:
-            #print(single_node[0])
             node_encode = (encode_aminoacids(single_node[0]))
             encoded_aminoacids.append(node_encode)
-        '''
-        for i in range(1,len(node_list)):
-            node_encode = (encode_aminoacids(nx.get_node_attributes(single_graph, 'label')[i]))
-            encoded_aminoacids.append(node_encode)
-        '''
+        
         encoded_aminoacids_array = [encoded_aminoacids[i].toarray()[0] for i in range(len(encoded_aminoacids))]
         #creo il tensore con gli ammioacidi codificati
         x = torch.tensor(encoded_aminoacids_array, dtype=torch.float)
-        #y = torch.tensor(single_graph.graph['label'])
+        
         index_classification = graphs_classifications.index(single_graph.graph['label'])
         y = torch.tensor(index_classification)
-        #y = torch.tensor([1], dtype=torch.long)
-        #data = Data(x=x, edge_index=edge_index, y=single_graph.graph['label'])
         data = Data(x=x, edge_index=edge_index, y=y)
         data.validate(raise_on_error=True)
         dataset.append(data)

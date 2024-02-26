@@ -3,7 +3,7 @@ import csv
 from glob import glob
 import os
 import sys
-from bio_embeddings.embed import ProtTransBertBFDEmbedder,SeqVecEmbedder
+from bio_embeddings.embed import SeqVecEmbedder
 from click import Path
 from pathlib import Path
 import numpy as np
@@ -38,7 +38,8 @@ header = ['pdb','classification']
 header.extend(range(1, max_seq_length))
 
 file_features_seq = "feature_sequence.csv"
-check_path = output_path+file_features_seq
+#check_path = output_path+file_features_seq
+check_path = os.path.join(output_path,file_features_seq)
 print(check_path)
 if not os.path.isfile(check_path):
     print("Creo il file")
@@ -68,5 +69,5 @@ for aas_file in aas_files:
         riga_da_scrivere.append(pdb_id) # Inserisco nella prima colonna il pdb id
         riga_da_scrivere.append(get_pdb_class(pdb_id, sys.argv[3]))
         for row_np_arr in np_arr:
-            riga_da_scrivere.append(np.mean(row_np_arr).astype('float64')) # Calcolo della media delle feature di un amminoacido
+            riga_da_scrivere.append(np.mean(row_np_arr).astype('float32')) # Calcolo della media delle feature di un amminoacido
         csv_writer.writerow(riga_da_scrivere)

@@ -4,47 +4,8 @@ from pathlib import Path
 import os
 from glob import glob
 import csv
-import numpy as np
-from scipy.sparse import csr_matrix, block_diag
-from scipy.sparse import find
 import one_hot_encode
-from collections import Counter
 
-#legenda che rappresenta il tipo di nodo nel dataset
-def switch_iupac(code):
-    switcher = {
-        'A': 1,
-        'C': 2,
-        'D': 3,
-        'E': 4,
-        'F': 5,
-        'G': 6,
-        'H': 7,
-        'I': 8,
-        'K': 9,
-        'L': 10,
-        'M': 11,
-        'N': 12,
-        'Q': 13,
-        'R': 14,
-        'S': 15,
-        'T': 16,
-        'U': 17,
-        'V': 18,
-        'W': 19,
-        'Y': 20
-    }
-    return switcher.get(code.upper(), -1)  # Ritorna -1 se il codice non è presente nel dizionario
-
-def get_sparse_matrix(adjacent_matrixs, card_matrix):
-    sparse_matrix = csr_matrix((card_matrix, card_matrix), dtype=np.float64)  # Creazione di una matrice sparsa vuota
-    start = 0
-    for ad_m in adjacent_matrixs:
-        ad_m_rows, ad_m_cols = ad_m.shape  # Otteniamo le dimensioni della matrice sparsa
-        sparse_matrix[start:start+ad_m_rows, start:start+ad_m_cols] = ad_m  # Assegnamento della matrice sparsa alla posizione corretta nella matrice composta
-        start += ad_m_rows
-    return sparse_matrix
-       
 def apply_threshold(x, i, j,threshold):
     if i == j:
         # Se l'elemento è sulla diagonale, restituisci il valore originale
@@ -65,14 +26,11 @@ def create_graph(matrix_file):
     df = pd.read_csv(matrix_file, index_col=0)
     threshold = 6.0e-5
     df = graph_weights(df,threshold)
-    print (df)
     # Crea un grafo non diretto
     G = nx.Graph()
 
     # Aggiungi nodi al grafo
     G.add_nodes_from(df.index)
-    
-
     # Itera sulla matrice e aggiungi archi al grafo solo se sono sotto la diagonale principale
     for i in range(len(df.index)):
         for j in range(i + 1, len(df.columns)):
@@ -109,19 +67,12 @@ def main(input_path, label_file):
         with open(check_path, mode='w', newline='') as file_csv:
             csv_writer = csv.writer(file_csv)
             csv_writer.writerow(intestazione)
-    dataset_path = os.path.join(input_path,"DataSet")
-    os.mkdir(dataset_path)
    
 # Apri il file CSV in modalità append
     with open(check_path, mode='a', newline='') as file_csv:
         csv_writer = csv.writer(file_csv)
         matrix_files = glob(os.path.join(input_path, '*.csv'))
         graphs_classifications = []
-        nodes_labels = []
-        nodes_for_graphs = []
-        adjacent_matrixs = []
-        count = 1
-
         graphs_list = []
 
         for matrix_file in matrix_files:
@@ -141,41 +92,6 @@ def main(input_path, label_file):
                             f'{pdb_classification}']
             csv_writer.writerow(riga_da_scrivere)
             graphs_list.append(graph)
-            #rnella sezione che segue venegono raccolti tutti i dati per la creazione del dataset per le gnn
             graphs_classifications.append(pdb_classification)#raccolgo tutti i nodi di tutti i grafi
-            for node in graph.nodes():
-                nodes_labels.append(switch_iupac(node[0]))
-                nodes_for_graphs.append(count)
-
-            adjacent_matrixs.append(nx.adjacency_matrix(graph))
-            count += 1
-        #one_hot_encode.dataset_create(graphs_list,len(Counter(graphs_classifications)))
+            
         one_hot_encode.dataset_create(graphs_list,list(set(graphs_classifications)))
-
-
-
-    #registro le classificazioni dei grafi
-    '''
-    with open(dataset_path+"\\"+"DATASET_graph_labels.txt", "w") as file:
-        for number in graphs_classifications:
-            file.write(str(number) + "\n")
-
-    #registro le eticchette dei nodi
-    with open(dataset_path+"\\"+"DATASET_node_labels.txt", "w") as file:
-        for number in nodes_labels:
-            file.write(str(number) + "\n")
-
-    with open(dataset_path+"\\"+"DATASET_graph_indicator.txt", "w") as file:
-        for number in nodes_for_graphs:
-            file.write(str(number) + "\n")
-   
-    sparse_matrix=get_sparse_matrix(adjacent_matrixs,len(nodes_for_graphs))
-    posizioni_valori_non_zero = sparse_matrix.nonzero()
-
-    # Convertiamo le posizioni in una lista di coppie di indici
-    index_pairs = list(zip(*posizioni_valori_non_zero))
-
-    with open(dataset_path+"\\"+"DATASET_A.txt", "w") as file:
-            for pair in index_pairs:
-                file.write(f"{pair[0]+1}, {pair[1]+1}\n")
-    '''
